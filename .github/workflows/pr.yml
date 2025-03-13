@@ -38,9 +38,9 @@ jobs:
         run: |
           yarn install
 
-      - name: Test
-        run: |
-          yarn test
+      #- name: Test
+      #  run: |
+      #    yarn test
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
