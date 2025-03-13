@@ -6,8 +6,7 @@ import { auctionsReducer } from './services/auctions';
 
 const middlewares: Middleware[] = [];
 
-// eslint-disable-next-line sonarjs/no-reference-error
-if (process?.env?.NODE_ENV === `development`) {
+if (import.meta.env.DEV) {
   const logger = createLogger({
     // ...options
   });
