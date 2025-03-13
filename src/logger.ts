@@ -1,7 +1,6 @@
 export const Logger = {
   log: (...args: unknown[]) => {
-    // eslint-disable-next-line sonarjs/no-reference-error
-    if (process?.env?.NODE_ENV === `development`) {
+    if (import.meta.env.DEV) {
       console.log(...args);
     }
   }

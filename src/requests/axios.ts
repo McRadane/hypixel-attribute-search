@@ -299,10 +299,6 @@ export const rawAuctionToAuction = (rawAuction: IAuctionsAPI): IAuction => {
     uuid: rawAuction.uuid
   };
 
-  if (auction.itemName.includes('Backpack')) {
-    console.log(auction.itemName, auction.rawItemName);
-  }
-
   const loreLines = rawAuction.item_lore.split('\n');
 
   loreLines.forEach((line) => {
