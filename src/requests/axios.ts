@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { attributes } from '../models/attributes';
+import { items } from '../models/items';
 
 export interface IAuctionsAPI {
   bin: boolean; // Indicate if auction or BIN
@@ -35,12 +36,17 @@ interface IAuctionsAPIPaginatedResponse {
   totalPages: number;
 }
 
+const isAttributeItem = (item: IAuctionsAPI): boolean => {
+  const cleanName = cleanAuctionName(item.item_name);
+  return items.includes(cleanName);
+};
+
 const getPageAuctionsRequests = async (page: number): Promise<IAuctionsAPIPaginatedResponse['auctions']> => {
   const pageDataResponse = await axios.get<IAuctionsAPIPaginatedResponse>(`https://api.hypixel.net/skyblock/auctions?page=${page}`);
   const pageData = pageDataResponse.data;
 
   if (pageData?.success) {
-    return pageData.auctions.filter((auction) => !auction.claimed);
+    return pageData.auctions.filter((auction) => !auction.claimed && isAttributeItem(auction));
   }
 
   return Promise.reject(new Error('No results'));
@@ -55,7 +61,7 @@ export const getAuctionData = (): Promise<IAuctionsAPI[]> => {
         throw new Error('Invalid query to auctions');
       }
 
-      const auctions = data.auctions;
+      const auctions = data.auctions.filter((auction) => !auction.claimed && isAttributeItem(auction));
 
       const promises: Promise<IAuctionsAPIPaginatedResponse['auctions']>[] = [];
 
@@ -301,15 +307,33 @@ export const rawAuctionToAuction = (rawAuction: IAuctionsAPI): IAuction => {
 
   const loreLines = rawAuction.item_lore.split('\n');
 
-  loreLines.forEach((line) => {
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  loreLines.forEach((line, index) => {
     // eslint-disable-next-line sonarjs/regular-expr -- Safe
     const match = /^§[0-9a-f]([a-z ]+) ([IVX]+)/i.exec(line);
     if (match) {
       const [, attribute, levelRoman] = match;
       const level = romanToNumber(levelRoman);
 
+      // Speed
+      // Experience
+      // Mana Steal
+
       if (attributes.includes(attribute) && level !== -1) {
-        auction.attributes[attribute] = level;
+        let attributeOk = true;
+        if (attribute === 'Speed' && line.includes(':')) {
+          attributeOk = false;
+        }
+        if (attribute === 'Experience' && !loreLines[index + 1].includes('more experience')) {
+          attributeOk = false;
+        }
+        if (attribute === 'Mana Steal' && !loreLines[index + 1].includes('max mana')) {
+          attributeOk = false;
+        }
+
+        if (attributeOk) {
+          auction.attributes[attribute] = level;
+        }
       }
     }
   });

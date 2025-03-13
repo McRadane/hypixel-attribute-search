@@ -7,9 +7,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { GridItems } from './components/GridItems';
+import { MultiSelect } from './components/MultiSelect';
 import { RangeSlider } from './components/RangeSlider';
 import { Select } from './components/Select';
+import { ToggleButtons } from './components/ToggleButtons';
 import { Logger } from './logger';
+import { attributes } from './models/attributes';
+import { auctionTypes } from './models/auctionsTypes';
+import { items } from './models/items';
 import { rawAuctionToAuction } from './requests/axios';
 import { Database } from './requests/database';
 import { setAuctions, startLoading } from './services/auctions';
@@ -19,11 +24,12 @@ export const App = () => {
   const dispatch = useDispatch();
 
   const auctionsRequest = useRef(false);
-  const { attributes, auctions, items, loading } = useSelector((state: RootState) => state.auctions);
+  const { auctions, loading } = useSelector((state: RootState) => state.auctions);
 
   const [filterItem, setFilterItem] = useState<string>();
-  const [filterAttribute, setFilterAttribute] = useState<string>();
+  const [filterAttribute, setFilterAttribute] = useState<string[]>();
   const [filterLevels, setFilterLevels] = useState<[number, number]>([1, 10]);
+  const [filterType, setFilterType] = useState('');
 
   const handleFilterLevelsChange = (newValue: number | number[]) => {
     const newNumbers = newValue as [number, number];
@@ -39,16 +45,22 @@ export const App = () => {
     }
 
     if (filterAttribute) {
-      filtered = filtered.filter((auction) => auction.attributes[filterAttribute]);
-      if (filterLevels[0] !== 1 || filterLevels[1] !== 10) {
-        filtered = filtered.filter(
-          (auction) => auction.attributes[filterAttribute] >= filterLevels[0] && auction.attributes[filterAttribute] <= filterLevels[1]
-        );
-      }
+      filterAttribute.forEach((attribute) => {
+        filtered = filtered.filter((auction) => auction.attributes[attribute]);
+        if (filterLevels[0] !== 1 || filterLevels[1] !== 10) {
+          filtered = filtered.filter(
+            (auction) => auction.attributes[attribute] >= filterLevels[0] && auction.attributes[attribute] <= filterLevels[1]
+          );
+        }
+      });
+    }
+
+    if (filterType) {
+      filtered = filtered.filter((auction) => auction.bin === (filterType === 'BIN'));
     }
 
     return filtered.sort((a, b) => a.startingBid - b.startingBid);
-  }, [auctions, filterItem, filterAttribute, filterLevels]);
+  }, [auctions, filterItem, filterAttribute, filterType, filterLevels]);
 
   useEffect(() => {
     if (!auctionsRequest.current) {
@@ -61,6 +73,7 @@ export const App = () => {
         .getAuctions()
         .then((data) => {
           const auctions = data.map((auction) => rawAuctionToAuction(auction));
+
           dispatch(setAuctions(auctions));
         })
         .catch((error) => {
@@ -82,17 +95,18 @@ export const App = () => {
         <Box sx={{ height: 8 }}>{loading && <LinearProgress />}</Box>
         <Box
           sx={{
+            alignItems: 'center',
             display: 'grid',
             gap: 1,
-            // justifyContent: "space-between",
-            gridTemplateColumns: 'auto auto auto',
+            gridTemplateColumns: 'repeat(4, auto)',
             padding: 1
           }}
         >
-          <Select label="Items" onChange={setFilterItem} values={items} allowEmpty />
-          <Select label="Attributes" onChange={setFilterAttribute} values={attributes} allowEmpty />
+          <Select label="Items" onChange={setFilterItem} values={items} />
+          <MultiSelect label="Attributes" maxItems={2} onChange={setFilterAttribute} values={attributes} />
 
           <RangeSlider label="Levels" max={10} min={1} onChange={handleFilterLevelsChange} />
+          <ToggleButtons label="Auction Type" onChange={setFilterType} options={auctionTypes} />
         </Box>
         {/*<Box
           sx={{

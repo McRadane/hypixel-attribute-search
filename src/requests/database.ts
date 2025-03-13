@@ -1,5 +1,7 @@
 import Dexie from 'dexie';
 
+import { Logger } from '../logger';
+
 import { getAuctionData, IAuctionsAPI } from './axios';
 
 interface ICache {
@@ -70,15 +72,17 @@ export class Database extends Dexie {
         .toArray()
         .then((array) => {
           if (array.length > 0) {
+            Logger.log('Returning auctions from cache');
             resolve(array);
           } else {
             const interval = setInterval(async () => {
               const newArray = await this.auctions.toArray();
               if (newArray.length > 0) {
+                Logger.log('Auctions has been fetched');
                 clearInterval(interval);
                 resolve(newArray);
               }
-            }, 100);
+            }, 1000);
           }
         })
         .catch((reason) => reject(reason));
@@ -97,7 +101,9 @@ export class Database extends Dexie {
   }
 
   private async _refresh() {
+    Logger.log('Start refreshing auctions');
     const auctions = await getAuctionData();
+    Logger.log('Auctions fetched', auctions.length);
     await this.auctions.clear();
     await this.auctions.bulkAdd(auctions);
   }

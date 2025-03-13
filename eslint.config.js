@@ -156,6 +156,7 @@ export default tseslint.config(
       'getter-return': 'off',
       'no-array-constructor': 'off',
       'no-class-assign': 'off',
+      'no-console': 'warn',
       'no-const-assign': 'off',
       'no-dupe-args': 'off',
       'no-dupe-class-members': 'off',

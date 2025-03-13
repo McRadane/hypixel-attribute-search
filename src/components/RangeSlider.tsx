@@ -1,4 +1,4 @@
-import { FormControl, Slider, Typography } from '@mui/material';
+import { FormGroup, FormLabel, Slider } from '@mui/material';
 import { FC, useState } from 'react';
 
 interface IRangeSliderProps {
@@ -24,9 +24,9 @@ export const RangeSlider: FC<IRangeSliderProps> = ({ label, max, min, onChange }
   };
 
   return (
-    <FormControl sx={{ flex: 1 }} variant="standard">
-      <Typography>{label}</Typography>
+    <FormGroup sx={{ flex: 1, padding: 1 }}>
+      <FormLabel>{label}</FormLabel>
       <Slider max={max} min={min} onChange={handleOnChange} value={values} valueLabelDisplay="auto" marks />
-    </FormControl>
+    </FormGroup>
   );
 };
